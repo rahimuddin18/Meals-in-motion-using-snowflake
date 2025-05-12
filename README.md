@@ -30,3 +30,6 @@ Sample transactional CSV files:
  Clean Tables (CLN_)
       ↓ (via Streams & Tasks)
  Consumption Tables (CNS_)
+
+
+![image](https://github.com/user-attachments/assets/097dd225-b520-483e-ae37-95b1eb85c5af)
