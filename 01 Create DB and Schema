@@ -1,0 +1,57 @@
+use role sysadmin;
+
+create database if not exists sandbox;
+use database sandbox;
+
+create schema if not exists stage_sch;
+create schema if not exists clean_sch;
+create schema if not exists consumption_sch;
+create schema if not exists common;
+
+use schema stage_sch;
+
+CREATE OR REPLACE FILE FORMAT stage_sch.csv_file_format
+  TYPE = 'CSV'
+  FIELD_DELIMITER = ','
+  SKIP_HEADER = 1
+  FIELD_OPTIONALLY_ENCLOSED_BY = NONE
+  NULL_IF = ('\\N');
+
+create stage stage_sch.csv_stg
+    directory = (enable = true)
+    comment = 'this is the snowflake internal stage';
+
+create or replace tag 
+    common.pii_policy_tag
+    allowed_values 'PII','PRICE','SENSITIVE','EMAIL'
+    comment = 'This is a PII policy tag object'; 
+    
+create or replace masking policy 
+    common.pii_masking_policy as (pii_text string)
+    returns string -> 
+    to_varchar('** PII **');
+
+create or replace masking policy 
+    common.email_masking_policy as (email_text string)
+    returns string -> 
+    to_varchar('** EMAIL **');
+
+create or replace masking policy 
+    common.phone_masking_policy as (phone string)
+    returns string -> 
+    to_varchar('** Phone **');    
+
+list @stage_sch.csv_stg; 
+
+SELECT
+    t.$1::TEXT AS locationid,
+    t.$2::TEXT AS city,
+    t.$3::TEXT AS state,
+    t.$4::TEXT AS zipcode,
+    t.$5::TEXT AS activeflag,
+    t.$6::TEXT AS createddate,
+    t.$7::TEXT AS modifieddate
+FROM @stage_sch.csv_stg/initial/location
+(FILE_FORMAT => 'stage_sch.csv_file_format') t;
+
+        
